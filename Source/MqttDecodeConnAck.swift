@@ -71,10 +71,22 @@ public class MqttDecodeConnAck: NSObject {
         if (protocolVersion == "5.0"){
             // properties
             while index - occupyIndex < propertyLength! {
-                let resVariableByteInteger = decodeVariableByteInteger(data: connackData, offset: index)
+                // Validate there's data left to decode
+                guard index < connackData.count else {
+                    printError("Index out of bounds before decoding variable byte integer")
+                    break
+                }
+            
+                guard let resVariableByteInteger = decodeVariableByteInteger(data: connackData, offset: index) else {
+                    printError("Failed to decode variable byte integer at index \(index)")
+                    break
+                }
+            
                 index = resVariableByteInteger.newOffset
                 let propertyNameByte = resVariableByteInteger.res
+            
                 guard let propertyName = CocoaMQTTPropertyName(rawValue: UInt8(propertyNameByte)) else {
+                    printError("Invalid property name: \(propertyNameByte)")
                     break
                 }
 
