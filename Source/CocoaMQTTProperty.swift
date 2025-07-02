@@ -117,17 +117,23 @@ func unsignedByteToString(data:[UInt8], offset:Int) -> (resStr: String, newOffse
         return nil
     }
 
-    var length = 0
-    let comRes = integerCompute(data: data, formatType: formatInt.formatUint16.rawValue, offset: newOffset)
-    length = comRes!.res
-    newOffset = comRes!.newOffset
-
-
-    var stringData = Data()
-    for _ in 0 ..< length {
-        stringData.append(data[newOffset])
-        newOffset += 1
+   // Compute the length from data (expecting 2 bytes)
+    guard let comRes = integerCompute(data: data, formatType: formatInt.formatUint16.rawValue, offset: newOffset) else {
+        return nil
     }
+
+    let length = comRes.res
+    newOffset = comRes.newOffset
+
+    // Ensure there's enough data to read 'length' bytes
+    if newOffset + length > data.count {
+        return nil
+    }
+
+    // Extract string data
+    let stringData = Data(data[newOffset..<newOffset+length])
+    newOffset += length
+    
     guard let res = String(data: stringData, encoding: .utf8) else {
         return nil
     }
