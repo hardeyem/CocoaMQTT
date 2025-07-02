@@ -142,24 +142,30 @@ func unsignedByteToString(data:[UInt8], offset:Int) -> (resStr: String, newOffse
 }
 
 
-func unsignedByteToBinary(data:[UInt8], offset:Int) -> (resStr: [UInt8], newOffset: Int)?{
+func unsignedByteToBinary(data: [UInt8], offset: Int) -> (resStr: [UInt8], newOffset: Int)? {
     var newOffset = offset
 
-    if offset + 1 > data.count {
+    // Ensure there are enough bytes to read a UInt16 (2 bytes)
+    if offset + 2 > data.count {
         return nil
     }
 
-    var length = 0
-    let comRes = integerCompute(data: data, formatType: formatInt.formatUint16.rawValue, offset: newOffset)
-    length = comRes!.res
-    newOffset = comRes!.newOffset
-
-
-    var res = [UInt8]()
-    for _ in 0 ..< length {
-        res.append(data[newOffset])
-        newOffset += 1
+    // Safely unwrap result from integerCompute
+    guard let comRes = integerCompute(data: data, formatType: formatInt.formatUint16.rawValue, offset: newOffset) else {
+        return nil
     }
+
+    let length = comRes.res
+    newOffset = comRes.newOffset
+
+    // Validate there's enough data to read 'length' bytes
+    if newOffset + length > data.count {
+        return nil
+    }
+
+    // Safely slice the data
+    let res = Array(data[newOffset ..< newOffset + length])
+    newOffset += length
 
     return (res, newOffset)
 }
